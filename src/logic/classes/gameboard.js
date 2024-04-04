@@ -1,56 +1,59 @@
-import ship from "./ship";
-
-export default class GameBoard {
+import Ship from './ship.js';
+export default class Gameboard {
     constructor() {
-        this.grid = []
-        this.ships = []
-        this.missedShots = new Set();
+        this.board = new Map();
+        this.missedAttacks = [];
+        this.ships = [];
+        this.gridSize = 10;  
+       }
 
-        for (let i = 0; i < 10; i++) {
-            this.grid[i] = new Array(10).fill(null)
-        }
-    }
-
-    isOutOfBounds(x,y) {
-        return x < 0 || x > 9 || y < 0 || y > 9 
-    }
-
-    isOccupied(coordinates) {
-        for (let [x, y] of coordinates) {
-            if (this.grid[y][x]) {
-                return true;
+    // Place a ship at specific coordinates with bounds checking.
+    placeShip(startCoord, ship, isHorizontal = true) {
+        // Check if the ship placement is within the bounds of the board.
+        if (isHorizontal) {
+            if (startCoord.x + ship.length > this.gridSize || startCoord.y >= this.gridSize) {
+                console.error('Ship placement is out of bounds.');
+                return false; // Indicate unsuccessful placement.
+            }
+        } else {
+            if (startCoord.y + ship.length > this.gridSize || startCoord.x >= this.gridSize) {
+                console.error('Ship placement is out of bounds.');
+                return false;
             }
         }
-        return false;
-    }
 
-    placeShip(shipLength, xCoord, yCoord, direction) {
-        const newship = new ship(shipLength);
-        const positions = this.generatePositions(shipLength, xCoord, yCoord, direction);
-
-        if (this.isOccupied(positions)) {
-                throw new Error('Position is occupied');
-            }      
-        positions.forEach(([x, y]) => {
-            this.grid[y][x] = newship;
-        })
-        
-        this.ships.push({ ship: newship, positions });
-    }
-
-    generatePositions(length, x, y, direction) {
-        const positions = [];
-        const xAxis = x;
-        const yAxis = y;
-
-        for (let i = 0; i < length; i++) {
-            const coord = direction === 'vertical' ? [xAxis, yAxis + i] : [xAxis + i, yAxis];
-            if (this.isOutOfBounds(coord[0], coord[1])) {
-                throw new Error('Ship is out of bounds');
+        // Check if the path is clear (no other ships in the way).
+        for (let i = 0; i < ship.length; i++) {
+            const key = isHorizontal ? `${startCoord.x + i},${startCoord.y}` : `${startCoord.x},${startCoord.y + i}`;
+            if (this.board.has(key)) {
+                console.error('Ship placement overlaps with another ship.');
+                return false; // Indicate unsuccessful placement due to overlap.
             }
-            
-            positions.push(coord);
         }
-        return positions;
+
+        // Place the ship since it's within bounds and doesn't overlap.
+        this.ships.push(ship);
+        for (let i = 0; i < ship.length; i++) {
+            const key = isHorizontal ? `${startCoord.x + i},${startCoord.y}` : `${startCoord.x},${startCoord.y + i}`;
+            this.board.set(key, ship);
+        }
+        return true; // Indicate successful placement.
+    }
+
+    receiveAttack(coord) {
+        const key = `${coord.x},${coord.y}`;
+        if (this.board.has(key)) {
+            const ship = this.board.get(key);
+            ship.hit();
+            if (ship.isSunk()) {
+                console.log('Ship sunk!');
+            }
+        } else {
+            this.missedAttacks.push(key);
+        }
+    }
+
+    allShipsSunk() {
+        return this.ships.every(ship => ship.isSunk());
     }
 }

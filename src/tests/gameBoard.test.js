@@ -1,54 +1,50 @@
-// create test for gameboard.js
+//create tests for gameboard.js
 
-import GameBoard from '../logic/classes/gameboard';
 import Ship from '../logic/classes/ship';
+import Gameboard from '../logic/classes/gameboard';
 
-describe('GameBoard', () => {
-  let gameBoard;
 
-  beforeEach(() => {
-    gameBoard = new GameBoard()
-  });
+describe('Gameboard functionality', () => {
+    let gameboard;
 
-  test('should place a ship at specified coordinates', () => {
-    const shipLength = 3;
-    const xCoord = 0;
-    const yCoord = 0;
-    const direction = 'horizontal';
-    gameBoard.placeShip(shipLength, xCoord, yCoord, direction);
+    beforeEach(() => {
+        gameboard = new Gameboard();
+    });
 
-    expect(gameBoard.grid[0][0]).toBeInstanceOf(Ship);
-    expect(gameBoard.grid[0][1]).toBeInstanceOf(Ship);
-    expect(gameBoard.grid[0][2]).toBeInstanceOf(Ship);
-  });
+    test('should place a ship within bounds', () => {
+        const ship = new Ship(3);
+        expect(gameboard.placeShip({ x: 0, y: 0 }, ship, true)).toBe(true);
+    });
 
-  test('should throw an error if ship is placed out of bounds', () => {
-    const shipLength = 3;
-    const xCoord = 8;
-    const yCoord = 0;
-    const direction = 'horizontal';
+    test('should not place a ship out of bounds', () => {
+        const ship = new Ship(4);
+        expect(gameboard.placeShip({ x: 8, y: 0 }, ship, true)).toBe(false); // Horizontal out of bounds
+        expect(gameboard.placeShip({ x: 0, y: 8 }, ship, false)).toBe(false); // Vertical out of bounds
+    });
 
-    expect(() => {
-      gameBoard.placeShip(shipLength, xCoord, yCoord, direction);
-    }).toThrow('Ship is out of bounds');
-  });
+    test('should detect a hit on a ship', () => {
+        const ship = new Ship(3);
+        gameboard.placeShip({ x: 2, y: 2 }, ship, true);
+        gameboard.receiveAttack({ x: 3, y: 2 });
+        expect(ship.hits).toBe(1);
+    });
 
-  test('should throw an error if position is occupied', () => {
-    gameBoard.placeShip(3, 0, 0, 'horizontal');
-    
-    expect(() => {
-      gameBoard.placeShip(3, 0, 0, 'vertical');
-    }).toThrow('Position is occupied');
-  });
+    test('should record a missed attack', () => {
+        gameboard.receiveAttack({ x: 0, y: 0 });
+        expect(gameboard.missedAttacks.includes('0,0')).toBe(true);
+    });
 
-  test('should accurately report when no positions are occupied', () => {
-    const positions = [[5,5], [5,6], [5,7]];
-    expect(gameBoard.isOccupied(positions)).toBe(false);
-  });
+    test('should report all ships sunk', () => {
+        const ship1 = new Ship(1);
+        gameboard.placeShip({ x: 0, y: 0 }, ship1, true);
+        gameboard.receiveAttack({ x: 0, y: 0 });
 
-  test('should accurately report when positions are occupied', () => {
-    gameBoard.placeShip(3, 5, 5, 'horizontal');
-    const positions = [[5,5], [5,6], [5,7]];
-    expect(gameBoard.isOccupied(positions)).toBe(true);
-  });
+        const ship2 = new Ship(1);
+        gameboard.placeShip({ x: 1, y: 1 }, ship2, true);
+        gameboard.receiveAttack({ x: 1, y: 1 });
+
+        expect(gameboard.allShipsSunk()).toBe(true);
+    });
 });
+
+

@@ -1,4 +1,4 @@
-export default class ship {
+export default class Ship {
     constructor(length) {
         this.length = length
         this.hits = 0
@@ -11,9 +11,7 @@ export default class ship {
     }
 
     isSunk() {
-        if (this.hits === this.length) {
-            return true
-        } 
-        return false    
+        this.sunk = this.hits === this.length
+        return this.sunk
     }
 }

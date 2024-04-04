@@ -1,11 +1,11 @@
 import createShip from "../logic/createShip";
-import ship from '../logic/classes/ship';
+import Ship from '../logic/classes/ship';
 
 describe('createShip function', () => {
     test('creates a ship of valid length', () => {
         const validLength = 3;
         const myShip = createShip(validLength);
-        expect(myShip).toBeInstanceOf(ship);
+        expect(myShip).toBeInstanceOf(Ship);
         expect(myShip.length).toBe(validLength);
     });
 
